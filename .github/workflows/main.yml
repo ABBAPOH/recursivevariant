@@ -1,0 +1,68 @@
+name: Build and test Recursive variant
+
+on:
+  push:
+
+jobs:
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Packages
+      run: sudo apt install libicu66
+    - name: Install Qt
+      uses: ./.github/actions/download-qt
+      with:
+        toolchain: gcc_64
+        # version: 6.2.0
+    - name: Install Qt Creator
+      uses: ./.github/actions/download-qtc
+    - name: Setup Qbs
+      run: |
+        qbs setup-toolchains --detect
+        qbs setup-qt --detect
+        qbs config profiles.qt.baseProfile x86_64-linux-gnu-gcc-10
+        qbs config defaultProfile qt
+        qbs config --list
+    - name: Configure
+      run: qbs resolve
+    - name: Build
+      run: qbs build
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Qt
+      uses: ./.github/actions/download-qt
+      with:
+        toolchain: win64_msvc2019_64
+        # version: 6.2.0
+    - name: Install Qt Creator
+      uses: ./.github/actions/download-qtc
+      with:
+        version: 7.0.2
+    - name: Setup Qbs
+      run: |
+        qbs setup-toolchains --detect
+        qbs setup-qt $(which qmake).exe qt
+        qbs config profiles.qt.baseProfile MSVC2022-x64
+        qbs config defaultProfile qt
+        qbs config --list
+      shell: bash
+    - name: Configure
+      run: qbs resolve
+      shell: bash
+    - name: Build
+      run: qbs build
+      shell: bash
+
+

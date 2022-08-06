@@ -1,5 +1,6 @@
 #include "variant.h"
 
+#include <stdexcept>
 #include <variant>
 
 //using StdVariant = QbsVariantBase;
@@ -79,7 +80,7 @@ Variant Variant::fromQVariant(const QVariant &v)
     case QMetaType::QVariantMap: return fromVariantMap(v.toMap());
     case QMetaType::QVariantList: return fromVariantList(v.toList());
     default:
-        throw std::runtime_error(std::string("Unknown variant type: ") + v.typeName());
+        throw std::runtime_error(std::string("Unsupported variant type: ") + v.typeName());
     }
     return {};
 }
