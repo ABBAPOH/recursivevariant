@@ -18,32 +18,29 @@ class VariantArray
 {
 public:
     class Data;
-    // using Iterator = std::vector<Variant>::iterator;
-    // using ConstIterator = std::vector<Variant>::const_iterator;
-
-    class Iterator;
-    class ConstIterator;
+    class iterator;
+    class const_iterator;
 
     VariantArray();
     VariantArray(Data data);
     VariantArray(const VariantArray &other);
-    VariantArray(VariantArray &&other);
+    VariantArray(VariantArray &&other) noexcept;
     VariantArray &operator=(const VariantArray &other);
-    VariantArray &operator=(VariantArray &&other);
+    VariantArray &operator=(VariantArray &&other) noexcept;
     ~VariantArray();
 
     Data &data() noexcept { return *d.Ptr(); }
     const Data &data() const noexcept { return *d.Ptr(); }
 
-    Iterator begin() noexcept;
-    ConstIterator begin() const noexcept;
-    ConstIterator cbegin() const noexcept;
-    ConstIterator constBegin() const noexcept;
+    iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+    const_iterator cbegin() const noexcept;
+    const_iterator constBegin() const noexcept;
 
-    Iterator end() noexcept;
-    ConstIterator end() const noexcept;
-    ConstIterator cend() const noexcept;
-    ConstIterator constEnd() const noexcept;
+    iterator end() noexcept;
+    const_iterator end() const noexcept;
+    const_iterator cend() const noexcept;
+    const_iterator constEnd() const noexcept;
 
     const Variant &at(size_t index) const;
 
@@ -54,14 +51,15 @@ public:
     void append(Variant v);
     void push_back(Variant v);
 
-    Iterator insert(Iterator it, Variant v);
+    iterator insert(iterator it, Variant v);
     template<typename It>
-    Iterator insert(Iterator it, It begin, It end);
+    iterator insert(iterator it, It begin, It end);
 
     Variant &operator[](size_t index) noexcept;
     const Variant &operator[](size_t index) const noexcept;
 
 private:
+    // std::vector is 3 pointers and it's size and alignment *should not* depend on the type
     using FakeType = std::vector<void*>;
     FastPimpl<Data, sizeof(FakeType), alignof(FakeType)> d;
 };
@@ -70,8 +68,9 @@ class VariantObject
 {
 public:
     class Data;
-    class Iterator;// = std::unordered_map<QString, Variant>::iterator;
-    class ConstIterator;// = std::unordered_map<QString, Variant>::const_iterator;
+    class iterator;
+    class const_iterator;
+    // using value_type = std::pair<const QString, Variant>;
 
     VariantObject();
     VariantObject(Data data);
@@ -84,21 +83,23 @@ public:
     Data &data() noexcept { return *d.Ptr(); }
     const Data &data() const noexcept { return *d.Ptr(); }
 
-    Iterator begin() noexcept;
-    ConstIterator begin() const noexcept;
-    ConstIterator cbegin() const noexcept;
-    ConstIterator constBegin() const noexcept;
+    iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+    const_iterator cbegin() const noexcept;
+    const_iterator constBegin() const noexcept;
 
-    Iterator end() noexcept;
-    ConstIterator end() const noexcept;
-    ConstIterator cend() const noexcept;
-    ConstIterator constEnd() const noexcept;
+    iterator end() noexcept;
+    const_iterator end() const noexcept;
+    const_iterator cend() const noexcept;
+    const_iterator constEnd() const noexcept;
 
     const Variant &at(const QString &key) const;
 
     bool empty() const noexcept;
     bool isEmpty() const noexcept;
     size_t size() const noexcept;
+
+    Variant &operator[](const QString &key);
 
 private:
     using FakeType = std::unordered_map<void *, void *>;
@@ -166,20 +167,93 @@ public:
     using Base::Base;
 };
 
-class VariantArray::Iterator: public std::vector<Variant>::iterator
+class VariantArray::const_iterator
 {
 public:
-    using Base = std::vector<Variant>::iterator;
-    using Base::Base;
-    Iterator(const Base &base): Base(base) {}
+    using Data = std::vector<Variant>::const_iterator;
+
+    using iterator_category = Data::iterator_category;
+    using difference_type = Data::difference_type;
+    using value_type = Data::value_type;
+    using reference = Data::reference;
+    using pointer = Data::pointer;
+
+    inline const_iterator() noexcept = default;
+    inline const_iterator(const Data &dd) noexcept: d(dd) {}
+
+    inline Data data() const { return d; }
+
+    inline reference operator*() const { return d.operator*(); }
+    inline pointer operator->() const { return d.operator->(); }
+    inline reference operator[](size_t j) const { return d[j]; }
+
+    inline bool operator==(const const_iterator &o) const noexcept { return d == o.d; }
+    inline bool operator!=(const const_iterator &o) const noexcept { return d != o.d; }
+    inline bool operator<(const const_iterator& other) const noexcept { return d < other.d; }
+    inline bool operator<=(const const_iterator& other) const noexcept { return d <= other.d; }
+    inline bool operator>(const const_iterator& other) const noexcept { return d > other.d; }
+    inline bool operator>=(const const_iterator& other) const noexcept { return d >= other.d; }
+    inline const_iterator &operator++() noexcept { ++d; return *this; }
+    inline const_iterator operator++(int) noexcept { const_iterator n = *this; ++d; return n; }
+    inline const_iterator &operator--() noexcept { d--; return *this; }
+    inline const_iterator operator--(int) noexcept { const_iterator n = *this; d--; return n; }
+    inline const_iterator &operator+=(difference_type j) noexcept { d+=j; return *this; }
+    inline const_iterator &operator-=(difference_type j) noexcept { d-=j; return *this; }
+    inline const_iterator operator+(difference_type j) const noexcept
+    { return const_iterator(d+j); }
+    inline const_iterator operator-(difference_type j) const noexcept
+    { return const_iterator(d-j); }
+    inline int operator-(const_iterator o) const noexcept { return d - o.d; }
+
+private:
+    friend class VariantArray::iterator;
+    Data d{};
 };
 
-class VariantArray::ConstIterator: public std::vector<Variant>::const_iterator
+class VariantArray::iterator
 {
 public:
-    using Base = std::vector<Variant>::const_iterator;
-    using Base::Base;
-    ConstIterator(const Base &base): Base(base) {}
+    using Data = std::vector<Variant>::iterator;
+
+    using iterator_category = Data::iterator_category;
+    using difference_type = Data::difference_type;
+    using value_type = Data::value_type;
+    using reference = Data::reference;
+    using pointer = Data::pointer;
+
+    inline iterator() noexcept = default;
+    inline iterator(const Data &dd) noexcept: d(dd) {}
+
+    inline Data data() const noexcept { return d; }
+
+    inline reference operator*() const noexcept { return *d; }
+    inline pointer operator->() const noexcept { return d.operator->(); }
+    inline reference operator[](size_t j) const noexcept { return d[j]; }
+
+    inline bool operator==(const iterator &o) const noexcept { return d == o.d; }
+    inline bool operator!=(const iterator &o) const noexcept { return d != o.d; }
+    inline bool operator<(const iterator& other) const noexcept { return d < other.d; }
+    inline bool operator<=(const iterator& other) const noexcept { return d <= other.d; }
+    inline bool operator>(const iterator& other) const noexcept { return d > other.d; }
+    inline bool operator>=(const iterator& other) const noexcept { return d >= other.d; }
+    inline bool operator==(const const_iterator &o) const noexcept { return d == o.d; }
+    inline bool operator!=(const const_iterator &o) const noexcept { return d != o.d; }
+    inline bool operator<(const const_iterator& other) const noexcept { return d < other.d; }
+    inline bool operator<=(const const_iterator& other) const noexcept { return d <= other.d; }
+    inline bool operator>(const const_iterator& other) const noexcept { return d > other.d; }
+    inline bool operator>=(const const_iterator& other) const noexcept { return d >= other.d; }
+    inline iterator &operator++() noexcept { ++d; return *this; }
+    inline iterator operator++(int) noexcept { iterator n = *this; ++d; return n; }
+    inline iterator &operator--() noexcept { d--; return *this; }
+    inline iterator operator--(int) noexcept { iterator n = *this; d--; return n; }
+    inline iterator &operator+=(difference_type j) noexcept { d+=j; return *this; }
+    inline iterator &operator-=(difference_type j) noexcept { d-=j; return *this; }
+    inline iterator operator+(difference_type j) const noexcept { return iterator(d+j); }
+    inline iterator operator-(difference_type j) const noexcept { return iterator(d-j); }
+    inline int operator-(iterator o) const noexcept { return d - o.d; }
+
+private:
+    Data d{};
 };
 
 class VariantObject::Data : public std::unordered_map<QString, Variant>
@@ -189,20 +263,66 @@ public:
     using Base::Base;
 };
 
-class VariantObject::Iterator: public std::unordered_map<QString, Variant>::iterator
+class VariantObject::const_iterator
 {
 public:
-    using Base = std::unordered_map<QString, Variant>::iterator;
-    using Base::Base;
-    Iterator(const Base &base): Base(base) {}
+    using Data = std::unordered_map<QString, Variant>::const_iterator;
+
+    using iterator_category = Data::iterator_category;
+    using difference_type = Data::difference_type;
+    using value_type = Data::value_type;
+    using reference = Data::reference;
+    using pointer = Data::pointer;
+
+    inline const_iterator() noexcept = default;
+    inline const_iterator(const Data &dd) noexcept: d(dd) {}
+
+    inline Data data() const noexcept { return d; }
+
+    inline reference operator*() const noexcept { return d.operator*(); }
+    inline pointer operator->() const noexcept { return d.operator->(); }
+
+    inline bool operator==(const const_iterator &o) const noexcept { return d == o.d; }
+    inline bool operator!=(const const_iterator &o) const noexcept { return d != o.d; }
+
+    inline const_iterator &operator++() noexcept { ++d; return *this; }
+    inline const_iterator operator++(int) noexcept { const_iterator n = *this; ++d; return n; }
+
+private:
+    friend class VariantObject::iterator;
+    Data d{};
 };
 
-class VariantObject::ConstIterator: public std::unordered_map<QString, Variant>::const_iterator
+class VariantObject::iterator
 {
 public:
-    using Base = std::unordered_map<QString, Variant>::const_iterator;
-    using Base::Base;
-    ConstIterator(const Base &base): Base(base) {}
+    using Data = std::unordered_map<QString, Variant>::iterator;
+
+    using iterator_category = Data::iterator_category;
+    using difference_type = Data::difference_type;
+    using value_type = Data::value_type;
+    using reference = Data::reference;
+    using pointer = Data::pointer;
+
+    inline iterator() noexcept = default;
+    inline iterator(const Data &dd) noexcept: d(dd) {}
+
+    inline Data data() const noexcept { return d; }
+
+    inline reference operator*() const noexcept { return d.operator*(); }
+    inline pointer operator->() const noexcept { return d.operator->(); }
+
+    inline bool operator==(const iterator &o) const noexcept { return d == o.d; }
+    inline bool operator!=(const iterator &o) const noexcept { return d != o.d; }
+
+    inline bool operator==(const const_iterator &o) const noexcept { return d == o.d; }
+    inline bool operator!=(const const_iterator &o) const noexcept { return d != o.d; }
+
+    inline iterator &operator++() noexcept { ++d; return *this; }
+    inline iterator operator++(int) noexcept { iterator n = *this; ++d; return n; }
+
+private:
+    Data d{};
 };
 
 // VariantArray implementation
@@ -212,26 +332,26 @@ inline VariantArray::VariantArray(Data data) : d(std::move(data))
 }
 
 inline VariantArray::VariantArray(const VariantArray &other) = default;
-inline VariantArray::VariantArray(VariantArray &&other) = default;
+inline VariantArray::VariantArray(VariantArray &&other) noexcept = default;
 inline VariantArray &VariantArray::operator=(const VariantArray &other) = default;
-inline VariantArray &VariantArray::operator=(VariantArray &&other) = default;
+inline VariantArray &VariantArray::operator=(VariantArray &&other) noexcept = default;
 inline VariantArray::~VariantArray() = default;
 
-inline auto VariantArray::begin() noexcept -> Iterator { return data().begin(); }
-inline auto VariantArray::begin() const noexcept -> ConstIterator { return data().cbegin(); }
-inline auto VariantArray::cbegin() const noexcept -> ConstIterator
+inline auto VariantArray::begin() noexcept -> iterator { return data().begin(); }
+inline auto VariantArray::begin() const noexcept -> const_iterator { return data().cbegin(); }
+inline auto VariantArray::cbegin() const noexcept -> const_iterator
 {
     return data().cbegin();
 }
-inline auto VariantArray::constBegin() const noexcept -> ConstIterator
+inline auto VariantArray::constBegin() const noexcept -> const_iterator
 {
     return data().cbegin();
 }
 
-inline auto VariantArray::end() noexcept -> Iterator { return data().end(); }
-inline auto VariantArray::end() const noexcept -> ConstIterator { return data().cend(); }
-inline auto VariantArray::cend() const noexcept -> ConstIterator { return data().cend(); }
-inline auto VariantArray::constEnd() const noexcept -> ConstIterator { return data().cend(); }
+inline auto VariantArray::end() noexcept -> iterator { return data().end(); }
+inline auto VariantArray::end() const noexcept -> const_iterator { return data().cend(); }
+inline auto VariantArray::cend() const noexcept -> const_iterator { return data().cend(); }
+inline auto VariantArray::constEnd() const noexcept -> const_iterator { return data().cend(); }
 
 inline const Variant & VariantArray::at(size_t index) const { return data().at(index); }
 inline bool VariantArray::empty() const noexcept { return data().empty(); }
@@ -240,10 +360,10 @@ inline size_t VariantArray::size() const noexcept { return data().size(); }
 
 inline void VariantArray::append(Variant v) { data().push_back(std::move(v)); }
 inline void VariantArray::push_back(Variant v) { data().push_back(std::move(v)); }
-inline auto VariantArray::insert(Iterator it, Variant v) -> Iterator
-{ return data().insert(it, std::move(v)); }
+inline auto VariantArray::insert(iterator it, Variant v) -> iterator
+{ return data().insert(it.data(), std::move(v)); }
 template<typename It>
-inline auto VariantArray::insert(Iterator it, It begin, It end) -> Iterator
+inline auto VariantArray::insert(iterator it, It begin, It end) -> iterator
 { return data().insert(it, begin, end); }
 
 inline Variant &VariantArray::operator[](size_t index) noexcept { return data()[index]; }
@@ -260,26 +380,28 @@ inline VariantObject &VariantObject::operator=(const VariantObject &other) = def
 inline VariantObject &VariantObject::operator=(VariantObject &&other) = default;
 inline VariantObject::~VariantObject() = default;
 
-inline auto VariantObject::begin() noexcept -> Iterator { return data().begin(); }
-inline auto VariantObject::begin() const noexcept -> ConstIterator { return data().cbegin(); }
-inline auto VariantObject::cbegin() const noexcept -> ConstIterator
+inline auto VariantObject::begin() noexcept -> iterator { return data().begin(); }
+inline auto VariantObject::begin() const noexcept -> const_iterator { return data().cbegin(); }
+inline auto VariantObject::cbegin() const noexcept -> const_iterator
 {
     return data().cbegin();
 }
-inline auto VariantObject::constBegin() const noexcept -> ConstIterator
+inline auto VariantObject::constBegin() const noexcept -> const_iterator
 {
     return data().cbegin();
 }
 
-inline auto VariantObject::end() noexcept -> Iterator { return data().end(); }
-inline auto VariantObject::end() const noexcept -> ConstIterator { return data().cend(); }
-inline auto VariantObject::cend() const noexcept -> ConstIterator { return data().cend(); }
-inline auto VariantObject::constEnd() const noexcept -> ConstIterator { return data().cend(); }
+inline auto VariantObject::end() noexcept -> iterator { return data().end(); }
+inline auto VariantObject::end() const noexcept -> const_iterator { return data().cend(); }
+inline auto VariantObject::cend() const noexcept -> const_iterator { return data().cend(); }
+inline auto VariantObject::constEnd() const noexcept -> const_iterator { return data().cend(); }
 
 inline const Variant &VariantObject::at(const QString &key) const { return data().at(key); }
 inline bool VariantObject::empty() const noexcept { return data().empty(); }
 inline bool VariantObject::isEmpty() const noexcept { return empty(); }
 inline size_t VariantObject::size() const noexcept { return data().size(); }
+
+inline Variant &VariantObject::operator[](const QString &key) { return data()[key]; }
 
 inline Variant::Variant() = default;
 inline Variant::Variant(VariantBase v) noexcept : VariantBase(std::move(v)) {}
