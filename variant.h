@@ -98,6 +98,10 @@ public:
     bool isEmpty() const noexcept;
     size_t size() const noexcept;
 
+    std::pair<iterator, bool> insert(std::pair<QString, Value>);
+    // template<typename It>
+    // iterator insert(iterator it, It begin, It end);
+
     Value &operator[](const QString &key);
 
 private:
@@ -107,8 +111,10 @@ private:
 
 using ValueBase = std::variant<
     std::monostate,
+    bool,
     int,
     uint,
+    double,
     QString,
     QStringList,
     Array,
@@ -120,8 +126,10 @@ class Value: public ValueBase
 public:
     enum class Type {
         Null,
+        Bool,
         Int,
         UInt,
+        Double,
         String,
         StringList,
         Array,
@@ -144,7 +152,7 @@ public:
     void clear() { *this = {}; }
 
     template<typename T>
-    T *getIf() const noexcept { return std::get_if<T>(*this); }
+    const T *getIf() const noexcept { return std::get_if<T>(this); }
 
     template<typename T>
     T value(T defaultValue = {}) const
@@ -399,6 +407,11 @@ inline const Value &Object::at(const QString &key) const { return data().at(key)
 inline bool Object::empty() const noexcept { return data().empty(); }
 inline bool Object::isEmpty() const noexcept { return empty(); }
 inline size_t Object::size() const noexcept { return data().size(); }
+
+inline auto Object::insert(std::pair<QString, Value> value) -> std::pair<iterator, bool>
+{
+    return data().insert(std::move(value));
+}
 
 inline Value &Object::operator[](const QString &key) { return data()[key]; }
 

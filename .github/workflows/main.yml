@@ -32,6 +32,8 @@ jobs:
       run: qbs resolve
     - name: Build
       run: qbs build
+    - name: Test
+      run: qbs run -p test_variant
 
   build-windows:
     name: Build on Windows
@@ -63,6 +65,9 @@ jobs:
       shell: bash
     - name: Build
       run: qbs build
+      shell: bash
+    - name: Test
+      run: qbs run -p test_variant
       shell: bash
 
 
