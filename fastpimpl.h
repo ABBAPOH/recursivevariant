@@ -16,7 +16,7 @@ public:
         new (Ptr()) T(*other.Ptr());
     }
 
-    FastPimpl(FastPimpl &&other)
+    FastPimpl(FastPimpl &&other) noexcept
     {
         new (Ptr()) T(std::move(*other.Ptr()));
     }
@@ -26,7 +26,7 @@ public:
         return *this;
     }
 
-    FastPimpl& operator=(FastPimpl&& rhs) {
+    FastPimpl& operator=(FastPimpl&& rhs) noexcept {
         *Ptr() = std::move(*rhs.Ptr());
         return *this;
     }
