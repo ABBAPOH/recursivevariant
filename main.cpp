@@ -9,15 +9,15 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    auto foo = [](Variant v) { qDebug() << v.toQVariant(); };
+    auto foo = [](Value v) { qDebug() << v.toQVariant(); };
 
-    Variant v(10);
-    Variant v2(v);
+    Value v(10);
+    Value v2(v);
     v2 = v;
 
     QStringList stringList{"30", "40"};
-    VariantObject complexKey1{{{"key1", Variant("value 1")}}};
-    VariantObject complexKey2{{{"key1", Variant("value 2")}}};
+    Object complexKey1{{{"key1", Value("value 1")}}};
+    Object complexKey2{{{"key1", Value("value 2")}}};
 
     qInfo() << (complexKey1 == complexKey2);
 

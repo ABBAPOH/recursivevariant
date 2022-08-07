@@ -5,15 +5,15 @@
 
 //using StdVariant = QbsVariantBase;
 
-VariantObject fromVariantHash(const QVariantHash &map)
+Object fromVariantHash(const QVariantHash &map)
 {
-    VariantObject result;
+    Object result;
     for (auto it = map.cbegin(), end = map.cend(); it != end; ++it)
-        result.data()[it.key()] = Variant::fromQVariant(it.value());
+        result.data()[it.key()] = Value::fromQVariant(it.value());
     return result;
 }
 
-QVariantHash toVariantHash(const VariantObject &map)
+QVariantHash toVariantHash(const Object &map)
 {
     QVariantHash result;
     for (const auto &item: map.data())
@@ -21,25 +21,25 @@ QVariantHash toVariantHash(const VariantObject &map)
     return result;
 }
 
-VariantObject fromVariantMap(const QVariantMap &map)
+Object fromVariantMap(const QVariantMap &map)
 {
-    VariantObject result;
+    Object result;
     for (auto it = map.cbegin(), end = map.cend(); it != end; ++it)
-        result.data()[it.key()] = Variant::fromQVariant(it.value());
+        result.data()[it.key()] = Value::fromQVariant(it.value());
     return result;
 }
 
-VariantArray fromVariantList(const QVariantList &list)
+Array fromVariantList(const QVariantList &list)
 {
-    VariantArray result;
+    Array result;
     auto &data = result.data();
     data.reserve(size_t(list.size()));
     for (const auto &item: list)
-        data.push_back(Variant::fromQVariant(item));
+        data.push_back(Value::fromQVariant(item));
     return result;
 }
 
-QVariantList toVariantList(const VariantArray &list)
+QVariantList toVariantList(const Array &list)
 {
     QVariantList result;
     const auto &data = list.data();
@@ -55,21 +55,21 @@ QVariantList toVariantList(const VariantArray &list)
 //    explicit QbsVariantData(StdVariant v) : StdVariant(std::move(v)) {}
 //};
 
-QVariant Variant::toQVariant() const
+QVariant Value::toQVariant() const
 {
     auto visitor = [](auto&& value) -> QVariant {
         using T = std::decay_t<decltype(value)>;
-        if constexpr (std::is_same_v<T, VariantObject>)
+        if constexpr (std::is_same_v<T, Object>)
             return toVariantHash(value);
-        else if constexpr (std::is_same_v<T, VariantArray>)
+        else if constexpr (std::is_same_v<T, Array>)
             return toVariantList(value);
         else
             return QVariant::fromValue(value);
     };
-    return std::visit(visitor, static_cast<const VariantBase&>(*this));
+    return std::visit(visitor, static_cast<const ValueBase&>(*this));
 }
 
-Variant Variant::fromQVariant(const QVariant &v)
+Value Value::fromQVariant(const QVariant &v)
 {
     switch (v.userType()) {
     case QMetaType::Int: return v.toInt();
