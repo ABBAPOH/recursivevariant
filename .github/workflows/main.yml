@@ -41,6 +41,8 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
+    env:
+      QT_ASSUME_STDERR_HAS_CONSOLE: 1
     steps:
     - uses: actions/checkout@v1
     - name: Install Qt
