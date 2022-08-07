@@ -10,6 +10,7 @@ public:
 
 private slots:
     void testValueSimple();
+    void testNumbers();
 };
 
 void TestValue::testValueSimple()
@@ -64,6 +65,121 @@ void TestValue::testValueSimple()
     QCOMPARE(value.value<bool>(), false);
     QCOMPARE(value.value<Object>(), Object());
     QCOMPARE(value.value<Array>(), Array());
+}
+
+void TestValue::testNumbers()
+{
+    // TODO: check unsigned
+    {
+        int numbers[] = {
+            0,
+            -1,
+            1,
+            (1<<26),
+            (1<<27),
+            (1<<28),
+            -(1<<26),
+            -(1<<27),
+            -(1<<28),
+            (1<<26) - 1,
+            (1<<27) - 1,
+            (1<<28) - 1,
+            -((1<<26) - 1),
+            -((1<<27) - 1),
+            -((1<<28) - 1)
+        };
+        int n = sizeof(numbers)/sizeof(int);
+
+        Array array;
+        for (int i = 0; i < n; ++i)
+            array.append(numbers[i]);
+
+        auto array2 = array;
+
+        QCOMPARE(array.size(), array2.size());
+        for (size_t i = 0; i < array.size(); ++i) {
+            QCOMPARE(array.at(i).type(), Value::Type::Int);
+            QCOMPARE(array.at(i).value<int>(), numbers[i]);
+            QCOMPARE(array2.at(i).type(), Value::Type::Int);
+            QCOMPARE(array2.at(i).value<int>(), numbers[i]);
+        }
+    }
+
+    {
+        int64_t numbers[] = {
+            0,
+            -1,
+            1,
+            (1ll<<54),
+            (1ll<<55),
+            (1ll<<56),
+            -(1ll<<54),
+            -(1ll<<55),
+            -(1ll<<56),
+            (1ll<<54) - 1,
+            (1ll<<55) - 1,
+            (1ll<<56) - 1,
+            -((1ll<<54) - 1),
+            -((1ll<<55) - 1),
+            -((1ll<<56) - 1)
+        };
+        int n = sizeof(numbers)/sizeof(qint64);
+
+        Array array;
+        for (int i = 0; i < n; ++i)
+            array.append(numbers[i]);
+
+        auto array2 = array;
+
+        QCOMPARE(array.size(), array2.size());
+        for (size_t i = 0; i < array.size(); ++i) {
+            QCOMPARE(array.at(i).type(), Value::Type::Int64);
+            QCOMPARE(array.at(i).value<int64_t>(), numbers[i]);
+            QCOMPARE(array2.at(i).type(), Value::Type::Int64);
+            QCOMPARE(array2.at(i).value<int64_t>(), numbers[i]);
+        }
+    }
+
+    {
+        double numbers[] = {
+            0,
+            -1,
+            1,
+            double(1ll<<54),
+            double(1ll<<55),
+            double(1ll<<56),
+            double(-(1ll<<54)),
+            double(-(1ll<<55)),
+            double(-(1ll<<56)),
+            double((1ll<<54) - 1),
+            double((1ll<<55) - 1),
+            double((1ll<<56) - 1),
+            double(-((1ll<<54) - 1)),
+            double(-((1ll<<55) - 1)),
+            double(-((1ll<<56) - 1)),
+            1.1,
+            0.1,
+            -0.1,
+            -1.1,
+            1e200,
+            -1e200
+        };
+        int n = sizeof(numbers)/sizeof(double);
+
+        Array array;
+        for (int i = 0; i < n; ++i)
+            array.append(numbers[i]);
+
+        auto array2 = array;
+
+        QCOMPARE(array.size(), array2.size());
+        for (size_t i = 0; i < array.size(); ++i) {
+            QCOMPARE(array.at(i).type(), Value::Type::Double);
+            QCOMPARE(array.at(i).value<double>(), numbers[i]);
+            QCOMPARE(array2.at(i).type(), Value::Type::Double);
+            QCOMPARE(array2.at(i).value<double>(), numbers[i]);
+        }
+    }
 }
 
 QTEST_MAIN(TestValue)
