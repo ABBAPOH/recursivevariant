@@ -93,14 +93,21 @@ public:
     const_iterator constEnd() const noexcept;
 
     const Value &at(const QString &key) const;
+    const_iterator find(const QString &key) const noexcept;
+    template<typename T = Value>
+    T value(const QString &key, T defaultValue = {}) const;
 
     bool empty() const noexcept;
     bool isEmpty() const noexcept;
     size_t size() const noexcept;
+    bool contains(const QString &key) const noexcept;
 
     std::pair<iterator, bool> insert(std::pair<QString, Value>);
     // template<typename It>
     // iterator insert(iterator it, It begin, It end);
+    iterator erase(iterator it);
+    iterator erase(const_iterator it);
+    size_t erase(const QString &key);
 
     Value &operator[](const QString &key);
 
@@ -157,6 +164,12 @@ public:
 
     template<typename T>
     const T *getIf() const noexcept { return std::get_if<T>(this); }
+
+    template<typename T>
+    const T &get() const { return std::get<T>(*this); }
+
+    template<typename T>
+    T &get() { return std::get<T>(*this); }
 
     template<typename T>
     T value(T defaultValue = {}) const
@@ -408,14 +421,29 @@ inline auto Object::cend() const noexcept -> const_iterator { return data().cend
 inline auto Object::constEnd() const noexcept -> const_iterator { return data().cend(); }
 
 inline const Value &Object::at(const QString &key) const { return data().at(key); }
+inline auto Object::find(const QString &key) const noexcept -> const_iterator
+{
+    return data().find(key);
+}
+template<typename T>
+inline T Object::value(const QString &key, T defaultValue) const
+{
+    const auto it = find(key);
+    return it == cend() ? defaultValue : it->second;
+}
 inline bool Object::empty() const noexcept { return data().empty(); }
 inline bool Object::isEmpty() const noexcept { return empty(); }
 inline size_t Object::size() const noexcept { return data().size(); }
+inline bool Object::contains(const QString &key) const noexcept { return data().count(key) > 0; }
 
 inline auto Object::insert(std::pair<QString, Value> value) -> std::pair<iterator, bool>
 {
     return data().insert(std::move(value));
 }
+
+inline auto Object::erase(iterator it) -> iterator { return data().erase(it.data()); }
+inline auto Object::erase(const_iterator it) -> iterator { return data().erase(it.data()); }
+inline auto Object::erase(const QString &key) -> size_t { return data().erase(key); }
 
 inline Value &Object::operator[](const QString &key) { return data()[key]; }
 

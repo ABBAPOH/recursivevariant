@@ -11,6 +11,9 @@ public:
 private slots:
     void testValueSimple();
     void testNumbers();
+    void testObjectSimple();
+    void benchArray();
+    void benchQVariantList();
 };
 
 void TestValue::testValueSimple()
@@ -179,6 +182,73 @@ void TestValue::testNumbers()
             QCOMPARE(array2.at(i).type(), Value::Type::Double);
             QCOMPARE(array2.at(i).value<double>(), numbers[i]);
         }
+    }
+}
+
+void TestValue::testObjectSimple()
+{
+    Object object;
+    object.insert({"number", 999.});
+    QCOMPARE(object.value("number").type(), Value::Type::Double);
+    QCOMPARE(object.value("number").value<double>(), 999.);
+    object.insert({"string", QString::fromLatin1("test")});
+    QCOMPARE(object.value("string").type(), Value::Type::String);
+    QCOMPARE(object.value("string").value<QString>(), QString("test"));
+    object.insert({"boolean", true});
+    QCOMPARE(object.value("boolean").value<bool>(), true);
+
+    QVERIFY2(object.contains("number"), "key number not found");
+    QVERIFY2(object.contains("string"), "key string not found");
+    QVERIFY2(object.contains("boolean"), "key boolean not found");
+
+    // if we put a JsonValue into the JsonObject and retrieve
+    // it, it should be identical.
+    Value value(QLatin1String("foo"));
+    object.insert({"value", value});
+    QCOMPARE(object.value("value"), value);
+
+    int size = object.size();
+    object.erase("boolean");
+    QCOMPARE(object.size(), size - 1);
+    QVERIFY2(!object.contains("boolean"), "key boolean should have been removed");
+
+    QString before = object.value("string").value<QString>();
+    object["string"] = QString::fromLatin1("foo");
+    QVERIFY2(object.value("string").value<QString>() != before, "value should have been updated");
+
+    size = object.size();
+    Object subobject;
+    subobject.insert({"number", 42});
+    subobject.insert({QLatin1String("string"), QLatin1String("foobar")});
+    object.insert({"subobject", subobject});
+    QCOMPARE(object.size(), size+1);
+    Value &subvalue = object[QLatin1String("subobject")];
+    try {
+        QCOMPARE(subvalue.get<Object>(), subobject);
+    } catch (const std::exception &ex) {
+        QVERIFY2(false, "Can't get Object");
+    }
+    Object &subojectRef = subvalue.get<Object>();
+    subojectRef.insert({"double", 999.});
+    QCOMPARE(subojectRef.size(), subobject.size() + 1);
+    QCOMPARE(subojectRef, object[QLatin1String("subobject")].value<Object>());
+}
+
+void TestValue::benchArray()
+{
+    QString data = QStringLiteral("42");
+    Array array;
+    QBENCHMARK {
+        array.push_back(data);
+    }
+}
+
+void TestValue::benchQVariantList()
+{
+    QString data = QStringLiteral("42");
+    QVariantList list;
+    QBENCHMARK {
+        list.append(data);
     }
 }
 
