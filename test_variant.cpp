@@ -12,8 +12,8 @@ private slots:
     void testValueSimple();
     void testNumbers();
     void testObjectSimple();
-    void benchArray();
-    void benchQVariantList();
+    void benchObject();
+    void benchQVariantHash();
 };
 
 void TestValue::testValueSimple()
@@ -234,21 +234,27 @@ void TestValue::testObjectSimple()
     QCOMPARE(subojectRef, object[QLatin1String("subobject")].value<Object>());
 }
 
-void TestValue::benchArray()
+void TestValue::benchObject()
 {
-    QString data = QStringLiteral("42");
-    Array array;
+    Value value{
+        Object{
+            {{"key", 42}},
+        }
+    };
     QBENCHMARK {
-        array.push_back(data);
+        QCOMPARE(value.get<Object>().value("key").get<int>(), 42);
     }
 }
 
-void TestValue::benchQVariantList()
+void TestValue::benchQVariantHash()
 {
-    QString data = QStringLiteral("42");
-    QVariantList list;
+    QVariant value{
+        QVariantHash{
+            {{"key", 42}}
+        }
+    };
     QBENCHMARK {
-        list.append(data);
+        QCOMPARE(value.toHash().value("key").toInt(), 42);
     }
 }
 
